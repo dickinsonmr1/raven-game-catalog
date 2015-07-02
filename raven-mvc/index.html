@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<script src="Scripts/angular.min.js"></script>
+
+<script>
+    (function () {
+        var app = angular.module("app", []);
+
+        app.controller("GameListController", ["$http", "$scope", function ($http, $scope) {
+            var vm = this;
+            
+            vm.games = [];
+
+            vm.title = "Game List";
+            
+            vm.newTitle = "";
+            vm.newReleaseYear = "";
+            vm.newRating = "";
+            vm.newPublisher = "";
+            vm.newDescription = "";
+            vm.newGenre = "";
+
+            $scope.activate = function () {
+                $http.get("api/Game").then(function (response) {
+                    vm.games = response.data;
+                });
+            }
+
+            $scope.addGame = function () {
+                $http({
+                    url: "api/Game/AddGame",
+                    method: "GET",
+                    params: {
+                        title: vm.newTitle,
+                        releaseYear: vm.newReleaseYear,
+                        rating: vm.newRating,
+                        publisher: vm.newPublisher,
+                        description: vm.newDescription,
+                        genre: vm.newGenre,
+                    }
+                });
+
+                vm.games.push({
+                    'Name': vm.newTitle,
+                    'ReleaseYear': vm.newReleaseYear,
+                    'Rating': vm.newRating,
+                    'Publisher': vm.newPublisher,
+                    'Description': vm.newDescription,
+                    'Genre': vm.newGenre,
+                })
+            };
+            
+            $scope.editGame = function (id) {
+                //$http({
+                //    url: "api/Game/AddGame",
+                //    method: "GET",
+                //    params: {
+                //        title: vm.newTitle,
+                //        releaseYear: vm.newReleaseYear,
+                //        rating: vm.newRating,
+                //        publisher: vm.newPublisher,
+                //        description: vm.newDescription,
+                //        genre: vm.newGenre,
+                //    }
+                //});
+
+                //vm.games.push({
+                //    'Name': vm.newTitle,
+                //    'ReleaseYear': vm.newReleaseYear,
+                //    'Rating': vm.newRating,
+                //    'Publisher': vm.newPublisher,
+                //    'Description': vm.newDescription,
+                //    'Genre': vm.newGenre,
+                //})
+            };
+            
+            // https://hello-angularjs.appspot.com/removetablerow
+            $scope.removeGame = function (id) {
+                var index = -1;
+                var gamesArray = eval(vm.games);
+                for (var i = 0; i < gamesArray.length; i++) {
+                    if (gamesArray[i].Id === id) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index === -1) {
+                    alert("Something gone wrong");
+                }
+                vm.games.splice(index, 1);
+                
+                $http({
+                    url: "api/Game/RemoveGame",
+                    method: "GET",
+                    params: { id: id }
+                });
+            };
+            
+            $scope.activate();
+            //$scope.submit();
+        }]);             
+    }());
+</script>
+
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>RavenDB Game Library</title>
+
+    <!-- Bootstrap -->
+    <link href="content/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+    <h1>Raven Game Catalog</h1>
+    <h4>Your games, stored in RavenDB and displayed by Angular / Bootstrap</h4>
+    <div ng-controller="GameListController as vm">
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAddGame"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Game</button>
+        <h1>{{ vm.Name }}</h1>
+        <table class="table table-bordered table-striped table-responsive">
+            <tr>
+                <th>Game Title</th>
+                <th>Actions</th>
+                <th>Release Year</th>
+                <th>Rating</th>
+                <th>Publisher</th>
+                <th>Description</th>
+                <th>Genre</th>
+            </tr>
+            <tr ng-repeat="game in vm.games">
+                <td>{{game.Name}}</td>
+                <td>
+                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modalEditGame"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
+                    <button type="button" class="btn btn-danger" ng-click="removeGame(game.Id)"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                </td>
+                <td>{{game.ReleaseYear}}</td>
+                <td>{{game.Rating}}</td>
+                <td>{{game.Publisher}}</td>
+                <td>{{game.Description}}</td>
+                <td>{{game.Genre}}</td>                
+            </tr>
+        </table>
+
+        <div class="modal fade" id="modalAddGame" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Add New Game</h4>
+                    </div>
+                    <form>
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="modal-body">
+                                    <p>Please enter the information of a game.</p>
+                                </div>
+                                <div class="input-group input-group-lg">
+                                <input type="text" class="form-control" placeholder="Title" ng-model="vm.newTitle">
+                                <input type="text" class="form-control" placeholder="Release Year" ng-model="vm.newReleaseYear">
+                                <input type="text" class="form-control" placeholder="Rating" ng-model="vm.newRating">
+                                <input type="text" class="form-control" placeholder="Genre" ng-model="vm.newGenre">
+                                <input type="text" class="form-control" placeholder="Publisher" ng-model="vm.newPublisher">
+                                <input type="text" class="form-control" placeholder="Description" ng-model="vm.newDescription">
+                            </div>
+                        </div>
+                    </form>
+                    <div class="modal-footer">
+                        <button ng-click="addGame()" class="btn btn-default" data-dismiss="modal">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalEditGame" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Add New Game</h4>
+                    </div>
+                    <form>
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="modal-body">
+                                    <p>Please enter the information of a game.</p>
+                                </div>
+                                <div class="input-group input-group-lg">
+                                    <input type="text" class="form-control" placeholder="Title" ng-model="vm.newTitle">
+                                    <input type="text" class="form-control" placeholder="Release Year" ng-model="vm.newReleaseYear">
+                                    <input type="text" class="form-control" placeholder="Rating" ng-model="vm.newRating">
+                                    <input type="text" class="form-control" placeholder="Genre" ng-model="vm.newGenre">
+                                    <input type="text" class="form-control" placeholder="Publisher" ng-model="vm.newPublisher">
+                                    <input type="text" class="form-control" placeholder="Description" ng-model="vm.newDescription">
+                                </div>
+                            </div>
+                    </form>
+                    <div class="modal-footer">
+                        <button ng-click="editGame()" class="btn btn-default" data-dismiss="modal">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>      
+    </div>
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>-->
+    <script src="scripts/jquery-2.1.4.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="scripts/bootstrap.min.js"></script>
+</body>
+</html>
