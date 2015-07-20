@@ -6,6 +6,7 @@ namespace RavenGameCatalog.Models
     public class Game
     {
         public Guid Id { get; set; }
+        public Guid GameId { get; set; }
         public string Name { get; set; }
         public int ReleaseYear { get; set; }
         public string Rating { get; set; }

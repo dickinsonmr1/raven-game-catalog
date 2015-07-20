@@ -24,7 +24,11 @@ namespace RavenGameCatalog
                     documentStore = new DocumentStore
                     {
                         Url = "http://localhost:8088",
-                        DefaultDatabase = "Games"
+                        DefaultDatabase = "Games",
+                        Conventions = new DocumentConvention
+                        {
+                            AllowQueriesOnId = true
+                        }
                     }.Initialize();
                 }
                 return documentStore;

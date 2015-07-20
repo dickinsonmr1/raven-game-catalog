@@ -10,14 +10,23 @@
             
             vm.games = [];
 
-            vm.title = "Game List";
+            vm.title = "Game List";            
             
-            vm.newTitle = "";
+            vm.newGameId = "";
+            vm.newName = "";
             vm.newReleaseYear = "";
             vm.newRating = "";
             vm.newPublisher = "";
             vm.newDescription = "";
             vm.newGenre = "";
+            
+            vm.editGameId = "";
+            vm.editName = "";
+            vm.editReleaseYear = "";
+            vm.editRating = "";
+            vm.editPublisher = "";
+            vm.editDescription = "";
+            vm.editGenre = "";
 
             $scope.activate = function () {
                 $http.get("api/Game").then(function (response) {
@@ -27,58 +36,86 @@
 
             $scope.addGame = function () {
                 $http({
-                    url: "api/Game/AddGame",
+                    url: "api/Game/Add",
                     method: "GET",
                     params: {
-                        title: vm.newTitle,
+                        name: vm.newName,
                         releaseYear: vm.newReleaseYear,
                         rating: vm.newRating,
                         publisher: vm.newPublisher,
                         description: vm.newDescription,
                         genre: vm.newGenre,
                     }
+                }).then(function (response) {
+                    vm.newGameId = response.data.gameId;
                 });
 
                 vm.games.push({
-                    'Name': vm.newTitle,
+                    'GameId': vm.newGameId,
+                    'Name': vm.newName,
                     'ReleaseYear': vm.newReleaseYear,
                     'Rating': vm.newRating,
                     'Publisher': vm.newPublisher,
                     'Description': vm.newDescription,
                     'Genre': vm.newGenre,
-                })
+                });
             };
             
-            $scope.editGame = function (id) {
-                //$http({
-                //    url: "api/Game/AddGame",
-                //    method: "GET",
-                //    params: {
-                //        title: vm.newTitle,
-                //        releaseYear: vm.newReleaseYear,
-                //        rating: vm.newRating,
-                //        publisher: vm.newPublisher,
-                //        description: vm.newDescription,
-                //        genre: vm.newGenre,
-                //    }
-                //});
+            // https://stackoverflow.com/questions/26459525/how-to-modify-and-update-data-table-row-in-angular-js
+            $scope.populateEditGame = function (gameId) {
+                $http({
+                    url: "api/Game/GetSingleGame",
+                    method: "GET",
+                    params: { gameId: gameId }
+                }).then(function (response) {
+                    vm.editGameId = response.data.GameId;
+                    vm.editName = response.data.Name;
+                    vm.editReleaseYear = response.data.ReleaseYear;
+                    vm.editRating = response.data.Rating;
+                    vm.editPublisher = response.data.Publisher;
+                    vm.editDescription = response.data.Description;
+                    vm.editGenre = response.data.Genre;
+                });
+            };
 
-                //vm.games.push({
-                //    'Name': vm.newTitle,
-                //    'ReleaseYear': vm.newReleaseYear,
-                //    'Rating': vm.newRating,
-                //    'Publisher': vm.newPublisher,
-                //    'Description': vm.newDescription,
-                //    'Genre': vm.newGenre,
-                //})
+            $scope.editGame = function (gameId) {
+                
+                for(var i = 0; i < vm.games.length; i++) {
+                    var game = vm.games[i];
+                    if(game.GameId == gameId)
+                    {
+                        game.Name = vm.editName;
+                        game.ReleaseYear = vm.editReleaseYear;
+                        game.Rating = vm.editRating;
+                        game.Publisher = vm.editPublisher;
+                        game.Description = vm.editDescription;
+                        game.Genre = vm.editGenre;
+                        
+                        $http({
+                            url: "api/Edit/Update",
+                            method: "GET",
+                            params: {
+                                gameId: game.GameId,
+                                name: game.Name,
+                                releaseYear: game.ReleaseYear,
+                                rating: game.Rating,
+                                publisher: game.Publisher,
+                                description: game.Description,
+                                genre: game.Genre
+                            }
+                        }).then(function (response) {
+                            alert('success');
+                        });
+                    }
+                }              
             };
             
-            // https://hello-angularjs.appspot.com/removetablerow
-            $scope.removeGame = function (id) {
+            //// https://hello-angularjs.appspot.com/removetablerow
+            $scope.removeGame = function (gameId) {
                 var index = -1;
                 var gamesArray = eval(vm.games);
                 for (var i = 0; i < gamesArray.length; i++) {
-                    if (gamesArray[i].Id === id) {
+                    if (gamesArray[i].GameId === gameId) {
                         index = i;
                         break;
                     }
@@ -89,12 +126,27 @@
                 vm.games.splice(index, 1);
                 
                 $http({
-                    url: "api/Game/RemoveGame",
+                    url: "api/Remove",
                     method: "GET",
-                    params: { id: id }
+                    params: { gameId: gameId }
                 });
             };
             
+            //$scope.editingData = [];
+
+            //for (var i = 0, length = $scope.tabelsData.length; i < length; i++) {
+            //    $scope.editingData[$scope.tabelsData[i].id] = false;
+            //}
+
+            //$scope.modify = function (tableData) {
+            //    $scope.editingData[tableData.id] = true;
+            //};
+
+
+            //$scope.update = function (tableData) {
+            //    $scope.editingData[tableData.id] = false;
+            //};
+
             $scope.activate();
             //$scope.submit();
         }]);             
@@ -123,7 +175,7 @@
     <h1>Raven Game Catalog</h1>
     <h4>Your games, stored in RavenDB and displayed by Angular / Bootstrap</h4>
     <div ng-controller="GameListController as vm">
-        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAddGame"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Game</button>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAddGame"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Game</button>
         <h1>{{ vm.Name }}</h1>
         <table class="table table-bordered table-striped table-responsive">
             <tr>
@@ -138,8 +190,8 @@
             <tr ng-repeat="game in vm.games">
                 <td>{{game.Name}}</td>
                 <td>
-                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modalEditGame"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
-                    <button type="button" class="btn btn-danger" ng-click="removeGame(game.Id)"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                    <button type="button" class="btn btn-info" ng-click="populateEditGame(game.GameId)" data-toggle="modal" data-target="#modalEditGame"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
+                    <button type="button" class="btn btn-danger" ng-click="removeGame(game.GameId)"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
                 </td>
                 <td>{{game.ReleaseYear}}</td>
                 <td>{{game.Rating}}</td>
@@ -163,7 +215,7 @@
                                     <p>Please enter the information of a game.</p>
                                 </div>
                                 <div class="input-group input-group-lg">
-                                <input type="text" class="form-control" placeholder="Title" ng-model="vm.newTitle">
+                                <input type="text" class="form-control" placeholder="Name" ng-model="vm.newName">
                                 <input type="text" class="form-control" placeholder="Release Year" ng-model="vm.newReleaseYear">
                                 <input type="text" class="form-control" placeholder="Rating" ng-model="vm.newRating">
                                 <input type="text" class="form-control" placeholder="Genre" ng-model="vm.newGenre">
@@ -171,9 +223,11 @@
                                 <input type="text" class="form-control" placeholder="Description" ng-model="vm.newDescription">
                             </div>
                         </div>
+                        </div>
                     </form>
                     <div class="modal-footer">
                         <button ng-click="addGame()" class="btn btn-default" data-dismiss="modal">Submit</button>
+                        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -184,7 +238,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title">Add New Game</h4>
+                        <h4 class="modal-title">Edit Game Information</h4>
                     </div>
                     <form>
                         <div class="panel panel-default">
@@ -193,17 +247,19 @@
                                     <p>Please enter the information of a game.</p>
                                 </div>
                                 <div class="input-group input-group-lg">
-                                    <input type="text" class="form-control" placeholder="Title" ng-model="vm.newTitle">
-                                    <input type="text" class="form-control" placeholder="Release Year" ng-model="vm.newReleaseYear">
-                                    <input type="text" class="form-control" placeholder="Rating" ng-model="vm.newRating">
-                                    <input type="text" class="form-control" placeholder="Genre" ng-model="vm.newGenre">
-                                    <input type="text" class="form-control" placeholder="Publisher" ng-model="vm.newPublisher">
-                                    <input type="text" class="form-control" placeholder="Description" ng-model="vm.newDescription">
+                                    <input type="text" class="form-control" placeholder="Name" ng-model="vm.editName">
+                                    <input type="text" class="form-control" placeholder="Release Year" ng-model="vm.editReleaseYear">
+                                    <input type="text" class="form-control" placeholder="Rating" ng-model="vm.editRating">
+                                    <input type="text" class="form-control" placeholder="Genre" ng-model="vm.editGenre">
+                                    <input type="text" class="form-control" placeholder="Publisher" ng-model="vm.editPublisher">
+                                    <input type="text" class="form-control" placeholder="Description" ng-model="vm.editDescription">
                                 </div>
                             </div>
+                        </div>
                     </form>
                     <div class="modal-footer">
-                        <button ng-click="editGame()" class="btn btn-default" data-dismiss="modal">Submit</button>
+                        <button ng-click="editGame(vm.editGameId)" class="btn btn-default" data-dismiss="modal">Save</button>
+                        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
                     </div>
                 </div>
             </div>
